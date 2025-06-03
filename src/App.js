@@ -1,24 +1,55 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import ProductList from './components/ProductList';
+import Cart from './components/Cart';
+import Login from './components/Login';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminProductList from './components/admin/AdminProductList';
+import ProductForm from './components/admin/ProductForm';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Verificar si el usuario está autenticado (si tiene token)
+    const token = localStorage.getItem('token');
+    setIsAuthenticated(!!token);
+  }, []);
+
+  const RutaProtegida = ({ children }) => {
+    if (!isAuthenticated) {
+      return <Navigate to="/login" replace />;
+    }
+    return children;
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <Router>
+      <Routes>
+        {/* Rutas públicas */}
+        <Route path="/" element={<ProductList />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route 
+          path="/login" 
+          element={<Login setIsAuthenticated={setIsAuthenticated} />} 
+        />
+
+        {/* Rutas de administrador */}
+        <Route 
+          path="/admin" 
+          element={
+            <RutaProtegida>
+              <AdminLayout />
+            </RutaProtegida>
+          }
         >
-          Learn React
-        </a>
-      </header>
-    </div>
+          <Route index element={<Navigate to="products" replace />} />
+          <Route path="products" element={<AdminProductList />} />
+          <Route path="products/new" element={<ProductForm />} />
+          <Route path="products/edit/:id" element={<ProductForm />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 }
 
